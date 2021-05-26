@@ -9,11 +9,10 @@
 + The code used for clustering uses the Euclidean clustering algorithm along with the KD-Tree developed in the course lesson.
 
 
-Your code does not need to sacrifice comprehension, stability, or robustness for speed. However, you should maintain good and efficient coding practices when writing your functions.
 
-# Here are some things to avoid. This is not a complete list, but there are a few examples of inefficiencies.
+Here are some things to avoid. This is not a complete list, but there are a few examples of inefficiencies.
 
     # Running the exact same calculation repeatedly when you can run it once, store the value and then reuse the value later.
-    #Loops that run too many times.
+    # Loops that run too many times.
     # Creating unnecessarily complex data structures when simpler structures work equivalently.
     # Unnecessary control flow checks.
