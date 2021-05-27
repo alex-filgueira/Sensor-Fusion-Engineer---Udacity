@@ -13,6 +13,18 @@ Results using Matcher Type MAT_BF:
 Results using Matcher Type MAT_FLANN:
 ![Table data test FLANN](output/table_FLANN.PNG)
 
+Top 3+1 pairs:
+Selected by your short process time.
+
+MAT_BF:
+![Table data test BF](output/top3_BF.PNG)
+
+
+MAT_FLANN:
+![Table data test FLANN](output/top3_FLANN.PNG)
+
+
+
 
 
 ## Basic Build Instructions
