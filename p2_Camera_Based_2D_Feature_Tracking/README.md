@@ -14,7 +14,7 @@
 ![Table data test FLANN](output/table_FLANN.PNG)
 
 # Top 3+1 pairs:
-Selected by your short process time.
+How we are working in the ambit of autonomous driving, the "real time" is very important. For this I selected the next TOP3+1 pair, because the resuts are robust and quickly.
 
 ## MAT_BF:
 ![Table data test BF](output/top3_BF.PNG)
