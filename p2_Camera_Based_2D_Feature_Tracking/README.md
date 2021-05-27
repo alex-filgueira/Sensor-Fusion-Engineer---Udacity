@@ -3,6 +3,10 @@
 Example: HARRIS + BRIEF:
 ![HARRIS + BRIEF](output/harris_BRIEF.gif)
 
+![Table data test BF](output/table_BF.PNG)
+
+![Table data test FLANN](output/table_FLANN.PNG)
+
 
 
 ## Basic Build Instructions
