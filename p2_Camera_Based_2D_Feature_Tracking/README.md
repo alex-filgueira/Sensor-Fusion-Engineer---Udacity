@@ -3,8 +3,14 @@
 Example: HARRIS + BRIEF:
 ![HARRIS + BRIEF](output/harris_BRIEF.gif)
 
+
+Result test using Selector Type SEL_KNN:
+
+Results using Matcher Type MAT_BF:
 ![Table data test BF](output/table_BF.PNG)
 
+
+Results using Matcher Type MAT_FLANN:
 ![Table data test FLANN](output/table_FLANN.PNG)
 
 
