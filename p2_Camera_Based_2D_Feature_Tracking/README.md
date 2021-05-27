@@ -1,7 +1,7 @@
 # SFND 2D Feature Tracking
 
 Example: HARRIS + BRIEF:
-![HARRIS + BRIEF](/output/harris_BRIEF.gif)
+![HARRIS + BRIEF](output/harris_BRIEF.gif)
 
 
 
