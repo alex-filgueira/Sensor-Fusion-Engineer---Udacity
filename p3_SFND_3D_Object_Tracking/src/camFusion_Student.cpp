@@ -139,6 +139,31 @@ void show3DObjects(std::vector<BoundingBox> &boundingBoxes, cv::Size worldSize, 
 void clusterKptMatchesWithROI(BoundingBox &boundingBox, std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPoint> &kptsCurr, std::vector<cv::DMatch> &kptMatches)
 {
     // ...
+    std::vector<cv::DMatch> kptMatchesROI;
+    double avgDistance = 0.0f;
+    double threshold = avgDistance * 0.8;
+
+    for(auto &match : kptMatches){
+        if(boundingBox.roi.contains(kptsCurr.at(match.trainIdx).pt)){
+            kptMatchesROI.push_back(match);
+        }
+    }
+
+    if(kptMatchesROI.size() > 0){
+        for(auto itr = kptMatchesROI.begin(); itr != kptMatchesROI.end(); itr++){
+            avgDistance += itr->distance;
+        }
+        avgDistance /= kptMatchesROI.size();
+    }
+    else{
+        return;
+    }
+
+    for(auto &itr : kptMatchesROI){
+        if (itr.distance < threshold){
+            boundingBox.kptMatches.push_back(itr);
+        }
+    }
 }
 
 
@@ -147,6 +172,33 @@ void computeTTCCamera(std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPo
                       std::vector<cv::DMatch> kptMatches, double frameRate, double &TTC, cv::Mat *visImg)
 {
     // ...
+    vector<double> distRatios;
+
+    for (auto it1 = kptMatches.begin(); it1 != kptMatches.end() - 1; ++it1){
+        cv::KeyPoint kpOuterCurr = kptsCurr.at(it1->trainIdx);
+        cv::KeyPoint kpOuterPrev = kptsPrev.at(it1->queryIdx);
+
+        for (auto it2 = kptMatches.begin() + 1; it2 != kptMatches.end(); ++it2){
+            double minDist = 70.0; 
+            cv::KeyPoint kpInnerCurr = kptsCurr.at(it2->trainIdx);
+            cv::KeyPoint kpInnerPrev = kptsPrev.at(it2->queryIdx);
+            double distCurr = cv::norm(kpOuterCurr.pt - kpInnerCurr.pt);
+            double distPrev = cv::norm(kpOuterPrev.pt - kpInnerPrev.pt);
+            if(distPrev > std::numeric_limits<double>::epsilon() && distCurr >= minDist){
+                distRatios.push_back(distCurr / distPrev);
+            }
+        }
+    }
+    if (distRatios.size() == 0){
+        TTC = NAN;
+        return;
+    }
+    std::sort(distRatios.begin(), distRatios.end());
+    long medIndex = floor(distRatios.size() / 2.0);
+    double medDistRatio = distRatios.size() % 2 == 0 ? (distRatios[medIndex - 1] + distRatios[medIndex]) / 2.0 : distRatios[medIndex];
+    double dT = 1 / frameRate;
+    TTC = -dT / (1 - medDistRatio);
+
 }
 
 
@@ -154,10 +206,80 @@ void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,
                      std::vector<LidarPoint> &lidarPointsCurr, double frameRate, double &TTC)
 {
     // ...
+    double prevX=0, currX=0, speed;
+    if(!lidarPointsPrev.size() || !lidarPointsCurr.size()){
+        TTC = NAN;
+        return;
+    }
+    for(auto it = lidarPointsPrev.begin(); it!= lidarPointsPrev.end(); ++it){
+        prevX += (*it).x;
+    }
+    prevX/=lidarPointsPrev.size();
+
+    for(auto it = lidarPointsCurr.begin(); it!= lidarPointsCurr.end(); ++it){
+        currX += (*it).x;
+    }
+    currX/=lidarPointsCurr.size();
+
+    speed = (prevX - currX) / (1/frameRate);
+    if(speed<0){
+        TTC = NAN;
+        return;
+    }
+    TTC = currX/speed;
 }
 
 
 void matchBoundingBoxes(std::vector<cv::DMatch> &matches, std::map<int, int> &bbBestMatches, DataFrame &prevFrame, DataFrame &currFrame)
 {
     // ...
+    int prevKpIdx, currKpIdx;
+    cv::KeyPoint prevKp, currKp;
+
+    int pSize = prevFrame.boundingBoxes.size();
+    int cSize = currFrame.boundingBoxes.size();
+    int counts[pSize][cSize] = {}
+
+    vector<int> prevBoxesIds, currBoxesIds;
+
+    for(auto it1=matches.begin(); it1!= matches.end(); ++it1){
+        prevKpIdx = (*it1).queryIdx;
+        currKpIdx = (*it1).trainIdx;
+
+        prevKp = prevFrame.keypoints[prevKpIdx];
+        currKp = currFrame.keypoints[currKpIdx];
+
+        prevBoxesIds.clear();
+        currBoxesIds.clear();
+
+        for(auto it2 = prevFrame.boundingBoxes.begin(); it2!= prevFrame.boundingBoxes.end(); ++it2){
+            if((*it2).roi.contains(prevKp.pt)){
+                prevBoxesIds.push_back((*it2).boxID);
+            }
+        }
+
+        for(auto it2 = currFrame.boundingBoxes.begin(); it2!= currFrame.boundingBoxes.end(); ++it2){
+            if((*it2).roi.contains(prevKp.pt)){
+                currBoxesIds.push_back((*it2).boxID);
+            }
+        }
+
+        for(auto prevId:prevBoxesIds){
+            for(auto currId:currBoxesIds){
+                counts[prevId][currId]++;
+            }
+        }
+    }
+
+    int maxCount=0, maxId;
+    for(int prevId=0; prevId<pSize; prevId++){
+        maxCount = 0;
+        for(int currId=0; currId<cSize; currId++){
+            if (counts[prevId][currId] > maxCount){
+                maxCount = counts[prevId][currId];
+                maxId = currId;
+            }
+        }
+        bbBestMatches[prevId] = maxId;
+    }
 }
