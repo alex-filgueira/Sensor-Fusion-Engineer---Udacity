@@ -238,7 +238,7 @@ void matchBoundingBoxes(std::vector<cv::DMatch> &matches, std::map<int, int> &bb
 
     int pSize = prevFrame.boundingBoxes.size();
     int cSize = currFrame.boundingBoxes.size();
-    int counts[pSize][cSize] = {}
+    int counts[pSize][cSize] = {};
 
     vector<int> prevBoxesIds, currBoxesIds;
 
