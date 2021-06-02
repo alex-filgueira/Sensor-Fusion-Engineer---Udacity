@@ -186,15 +186,19 @@ Vertical axis: TTC and horizontal axis N frames.
 As you can see in the graphic above, some strong and strange changes are between some frames, for example 2-3-4 and 16-17-18-19.
 I do a focus in the first group with the next captures:
 
+frame 1
 ![capture_ttcLidar_1](output/capture_ttcLidar_1.PNG)
 
 Focus here: frame 2
 ![capture_ttcLidar_2](output/capture_ttcLidar_2.PNG)
+
 Focus here: frame 3
 ![capture_ttcLidar_3](output/capture_ttcLidar_3.PNG)
+
 Focus here: frame 4
 ![capture_ttcLidar_4](output/capture_ttcLidar_4.PNG)
 
+frame 5
 ![capture_ttcLidar_5](output/capture_ttcLidar_5.PNG)
 
 In the above captures yo ucan see the road with the in front car selected and below this the lidar top view.
@@ -217,19 +221,24 @@ Analysing this .csv I can create the next graphics:
 
 ### Time:
 This graphic compute the median time for all the 18 frames usign in the project.
+
 ![graphic_time_descriptor](output/graphic_time_descriptor.PNG)
 
 This graphic compute the median time for all the 18 frames for all the descriptors (BRISK, BRIEF, ORB, FREAK) for each detector (SHITOMASI, HARRIS, FAST, BRISK, ORB, AKAZE, SIFT).
+
 ![graphic_time_detector](output/graphic_time_detector.PNG)
 
 As you can see the detector BRISK is usually more slow and perhaps SHIFT could have better results but in the project I can´t process SIFT detector with all the descriptors.
 
 ### TTC Camera:
 In the next 3 chards you can see the TTC calculated for the first frame until the third with the all diffrent detectors, all with BRISK (I take BRISK but is posible use other).
+
 Frame 1:
 ![graphic_ttcCamera_Brisk_1](output/graphic_ttcCamera_Brisk_1.PNG)
+
 Frame 2:
 ![graphic_ttcCamera_Brisk_2](output/graphic_ttcCamera_Brisk_2.PNG)
+
 Frame 3:
 ![graphic_ttcCamera_Brisk_3](output/graphic_ttcCamera_Brisk_3.PNG)
 
@@ -237,6 +246,7 @@ You can see a "similar" form in the 3 graphics, in the 3rd frame, HARRIS + BRISK
 We can analyze with this data that the diffrent detectors implican diffrent TTC results for the same frame.
 
 In the next graphics you can see a study for the TTC Camera results for SHITOMASI, HARRIS, FAST and BRISk for all the descriptor (BRISK, BRIEF, ORB, FREAK).
+
 ![graphic_ttcCamera_Brisk_all](output/graphic_ttcCamera_BRISK_all.PNG)
 ![graphic_ttcCamera_FAST_all](output/graphic_ttcCamera_FAST_all.PNG)
 ![graphic_ttcCamera_HARRIS_all](output/graphic_ttcCamera_HARRIS_all.PNG)
@@ -246,7 +256,7 @@ The above study was does for check if some par of detector + descriptor is more 
 For example for SHITOMASI I can reject use BRISk because produce a wrong result in the frame 10.
 
 You can see all the result in the .csv file:
-![statistics](output/statistics.csv)
+![statistics.csv](output/statistics.csv)
 
 
 
