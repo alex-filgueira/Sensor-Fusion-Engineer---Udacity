@@ -158,11 +158,11 @@ int main(int argc, const char *argv[])
         }
         else if (detectorType.compare("HARRIS") == 0)
         {
-            performance = detKeypointsHarris(keypoints, imgGray, false);
+            detKeypointsHarris(keypoints, imgGray, false);
         }
         else
         {
-            performance = detKeypointsModern(keypoints, imgGray, detectorType, false);
+            detKeypointsModern(keypoints, imgGray, detectorType, false);
         }
 
         // optional : limit number of keypoints (helpful for debugging and learning)
