@@ -42,9 +42,10 @@ int main(int argc, const char *argv[])
     }
     else if(argc == 2){
          if(std::string(argv[1]) == "-h"){
+           cout << "You can launch it with a detector and a descriptor same as: ./3D_object_tracking SHITOMASI FREAK" << endl;
             cout << "detectorType: SHITOMASI, HARRIS, FAST, BRISK, ORB, AKAZE, SIFT" << endl;
             cout << "descriptorType: BRISK, BRIEF, ORB, FREAK, AKAZE, SIFT" << endl;
-            cout << "-test: All detectors + all descriptors" << endl;
+            cout << "-test: Launch all detectors + all descriptors without visualization." << endl;
             flag_arg = false;
         }
         else  if(std::string(argv[1]) == "-test"){
