@@ -1,29 +1,76 @@
 # SFND 3D Object Tracking
 
-Welcome to the final project of the camera course. By completing all the lessons, you now have a solid understanding of keypoint detectors, descriptors, and methods to match them between successive images. Also, you know how to detect objects in an image using the YOLO deep-learning framework. And finally, you know how to associate regions in a camera image with Lidar points in 3D space. Let's take a look at our program schematic to see what we already have accomplished and what's still missing.
 
-<img src="images/course_code_structure.png" width="779" height="414" />
+## Project Rubric Points
 
-In this final project, you will implement the missing parts in the schematic. To do this, you will complete four major tasks: 
-1. First, you will develop a way to match 3D objects over time by using keypoint correspondences. 
-2. Second, you will compute the TTC based on Lidar measurements. 
-3. You will then proceed to do the same using the camera, which requires to first associate keypoint matches to regions of interest and then to compute the TTC based on those matches. 
-4. And lastly, you will conduct various tests with the framework. Your goal is to identify the most suitable detector/descriptor combination for TTC estimation and also to search for problems that can lead to faulty measurements by the camera or Lidar sensor. In the last course of this Nanodegree, you will learn about the Kalman filter, which is a great way to combine the two independent TTC measurements into an improved version which is much more reliable than a single sensor alone can be. But before we think about such things, let us focus on your final project in the camera course. 
+#### 1. FP.1 Match 3D Objects
 
-## Dependencies for Running Locally
-* cmake >= 2.8
-  * All OSes: [click here for installation instructions](https://cmake.org/install/)
-* make >= 4.1 (Linux, Mac), 3.81 (Windows)
-  * Linux: make is installed by default on most Linux distros
-  * Mac: [install Xcode command line tools to get make](https://developer.apple.com/xcode/features/)
-  * Windows: [Click here for installation instructions](http://gnuwin32.sourceforge.net/packages/make.htm)
-* OpenCV >= 4.1
-  * This must be compiled from source using the `-D OPENCV_ENABLE_NONFREE=ON` cmake flag for testing the SIFT and SURF detectors.
-  * The OpenCV 4.1.0 source code can be found [here](https://github.com/opencv/opencv/tree/4.1.0)
-* gcc/g++ >= 5.4
-  * Linux: gcc / g++ is installed by default on most Linux distros
-  * Mac: same deal as make - [install Xcode command line tools](https://developer.apple.com/xcode/features/)
-  * Windows: recommend using [MinGW](http://www.mingw.org/)
+```
+void matchBoundingBoxes(std::vector<cv::DMatch> &matches, std::map<int, int> &bbBestMatches, DataFrame &prevFrame, DataFrame &currFrame)
+{
+    // ...
+    int prevKpIdx, currKpIdx;
+    cv::KeyPoint prevKp, currKp;
+
+    int pSize = prevFrame.boundingBoxes.size();
+    int cSize = currFrame.boundingBoxes.size();
+    int counts[pSize][cSize] = {};
+
+    vector<int> prevBoxesIds, currBoxesIds;
+
+    for(auto it1=matches.begin(); it1!= matches.end(); ++it1){
+        prevKpIdx = (*it1).queryIdx;
+        currKpIdx = (*it1).trainIdx;
+
+        prevKp = prevFrame.keypoints[prevKpIdx];
+        currKp = currFrame.keypoints[currKpIdx];
+
+        prevBoxesIds.clear();
+        currBoxesIds.clear();
+
+        for(auto it2 = prevFrame.boundingBoxes.begin(); it2!= prevFrame.boundingBoxes.end(); ++it2){
+            if((*it2).roi.contains(prevKp.pt)){
+                prevBoxesIds.push_back((*it2).boxID);
+            }
+        }
+
+        for(auto it2 = currFrame.boundingBoxes.begin(); it2!= currFrame.boundingBoxes.end(); ++it2){
+            if((*it2).roi.contains(prevKp.pt)){
+                currBoxesIds.push_back((*it2).boxID);
+            }
+        }
+
+        for(auto prevId:prevBoxesIds){
+            for(auto currId:currBoxesIds){
+                counts[prevId][currId]++;
+            }
+        }
+    }
+
+    int maxCount=0, maxId;
+    for(int prevId=0; prevId<pSize; prevId++){
+        maxCount = 0;
+        for(int currId=0; currId<cSize; currId++){
+            if (counts[prevId][currId] > maxCount){
+                maxCount = counts[prevId][currId];
+                maxId = currId;
+            }
+        }
+        bbBestMatches[prevId] = maxId;
+    }
+}
+```
+
+#### 2. FP.2 Compute Lidar-based TTC
+
+#### 3. FP.3 Associate Keypoint Correspondences with Bounding Boxes
+
+#### 4. FP.4 Compute Camera-based TTC
+
+#### 5. FP.5 Performance Evaluation 1
+
+#### 6. FP.6 Performance Evaluation 2
+
 
 ## Basic Build Instructions
 
