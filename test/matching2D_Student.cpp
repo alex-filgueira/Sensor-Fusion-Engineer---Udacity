@@ -1,4 +1,3 @@
-
 #include <numeric>
 #include "matching2D.hpp"
 
@@ -20,13 +19,6 @@ void matchDescriptors(std::vector<cv::KeyPoint> &kPtsSource, std::vector<cv::Key
     else if (matcherType.compare("MAT_FLANN") == 0)
     {
         // ...
-        if (descSource.type() != CV_32F){ 
-            descSource.convertTo(descSource, CV_32F); 
-        }
-        if (descRef.type() != CV_32F){
-           descRef.convertTo(descRef, CV_32F);
-        }
-        matcher = cv::DescriptorMatcher::create(cv::DescriptorMatcher::FLANNBASED);
     }
 
     // perform matching task
@@ -39,15 +31,6 @@ void matchDescriptors(std::vector<cv::KeyPoint> &kPtsSource, std::vector<cv::Key
     { // k nearest neighbors (k=2)
 
         // ...
-        vector<vector<cv::DMatch>> knn_matches;
-        matcher->knnMatch(descSource, descRef, knn_matches, 2);
-
-        double minNNDistRatio = 0.8;
-        for (auto it = knn_matches.begin(); it != knn_matches.end(); ++it){
-            if ((*it)[0].distance < (minNNDistRatio * (*it)[1].distance)){
-                matches.push_back((*it)[0]);
-            }
-        }
     }
 }
 
@@ -65,27 +48,44 @@ void descKeypoints(vector<cv::KeyPoint> &keypoints, cv::Mat &img, cv::Mat &descr
 
         extractor = cv::BRISK::create(threshold, octaves, patternScale);
     }
-    else if(descriptorType.compare("BRIEF") == 0){
+    else if(descriptorType.compare("BRIEF") == 0)
+    {
         extractor = cv::xfeatures2d::BriefDescriptorExtractor::create();
     }
-    else if(descriptorType.compare("ORB") == 0){
+    else if (descriptorType.compare("ORB") == 0)
+    {
         extractor = cv::ORB::create();
     }
-    else if(descriptorType.compare("FREAK") == 0){
+    else if (descriptorType.compare("FREAK") == 0)
+    {
         extractor = cv::xfeatures2d::FREAK::create();
     }
-    else if(descriptorType.compare("AKAZE") == 0){
+    else if (descriptorType.compare("AKAZE") == 0)
+    {
         extractor = cv::AKAZE::create();
     }
-    else if(descriptorType.compare("SIFT") == 0){
+    else if (descriptorType.compare("SIFT") == 0)
+    {
         extractor = cv::xfeatures2d::SIFT::create();
     }
+
+    // perform feature description
+    extractor->compute(img, keypoints, descriptors);
 
     // perform feature description
     double t = (double)cv::getTickCount();
     extractor->compute(img, keypoints, descriptors);
     t = ((double)cv::getTickCount() - t) / cv::getTickFrequency();
     cout << descriptorType << " descriptor extraction in " << 1000 * t / 1.0 << " ms" << endl;
+}
+
+void vis(string windowName, cv::Mat &img, std::vector<cv::KeyPoint> &keypoints, cv::Mat &visImg)
+{
+    cv::namedWindow(windowName, 5);
+    //cv::Mat visImage = dst_norm_scaled.clone();
+    cv::drawKeypoints(img, keypoints, visImg, cv::Scalar::all(-1), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
+    cv::imshow(windowName, visImg);
+    cv::waitKey(0);
 }
 
 // Detect keypoints in image using the traditional Shi-Thomasi detector
@@ -108,6 +108,7 @@ void detKeypointsShiTomasi(vector<cv::KeyPoint> &keypoints, cv::Mat &img, bool b
     // add corners to result vector
     for (auto it = corners.begin(); it != corners.end(); ++it)
     {
+
         cv::KeyPoint newKeyPoint;
         newKeyPoint.pt = cv::Point2f((*it).x, (*it).y);
         newKeyPoint.size = blockSize;
@@ -130,101 +131,48 @@ void detKeypointsShiTomasi(vector<cv::KeyPoint> &keypoints, cv::Mat &img, bool b
 
 void detKeypointsModern(std::vector<cv::KeyPoint> &keypoints, cv::Mat &img, std::string detectorType, bool bVis)
 {
-    cv::Ptr<cv::FeatureDetector> detector;
-
-    if (detectorType.compare("FAST") == 0){
-        int threshold = 20;
-        cv::FastFeatureDetector::DetectorType type = cv::FastFeatureDetector::TYPE_9_16;
-        detector=cv::FastFeatureDetector::create(threshold,true,type);
-    }
-    else if (detectorType.compare("BRISK") == 0){
-        detector=cv::BRISK::create();
-    }
-
-    else if (detectorType.compare("SIFT") == 0){
-        int nfeatures = 100;
-        detector = cv::xfeatures2d::SIFT::create();
-    }
-    else if (detectorType.compare("ORB") == 0){
-        int nfeatures = 100;
-        detector = cv::ORB::create();
-    }
-    else if (detectorType.compare("AKAZE") == 0){
-        int nfeatures = 100;
-        detector = cv::AKAZE::create();
-    }
-
-    detector->detect(img, keypoints);
-
-    if(bVis){
-        cv::Mat visImage = img.clone();
-        cv::drawKeypoints(img, keypoints, visImage, cv::Scalar::all(-1), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
-        string windowName = "detKeypointsModern Detector Results";
-        cv::namedWindow(windowName, 6);
-        imshow(windowName, visImage);
-        cv::waitKey(0);
-    }
-}
-
-
-void detKeypointsHarris(vector<cv::KeyPoint> &keypoints, cv::Mat &img, bool bVis)
-{
-    // Detector parameters
-    
-    int blockSize = 2;
-    int apertureSize = 3;
-    int minResponse = 100;
-    double k = 0.04;
-
-    // Detect Harris corners and normalize output
-    cv::Mat dst, dst_norm, dst_norm_scaled;
-    dst = cv::Mat::zeros(img.size(), CV_32FC1);
-    cv::cornerHarris(img, dst, blockSize, apertureSize, k, cv::BORDER_DEFAULT);
-    cv::normalize(dst, dst_norm, 0, 255, cv::NORM_MINMAX, CV_32FC1, cv::Mat());
-    cv::convertScaleAbs(dst_norm, dst_norm_scaled);
-
-    double maxOverlap = 0.0f;
-	
-    // loop over normalised harris matrix
-    for (size_t i = 0; i < dst_norm.rows; i++){
-        for (size_t j = 0; j < dst_norm.cols; j++){
-            int response = (int)dst_norm.at<float>(i, j);
-            if (response > minResponse){
-                cv::KeyPoint newKeyPoint;
-                newKeyPoint.pt = cv::Point2f(j, i);
-                newKeyPoint.size = 2 * apertureSize;
-                newKeyPoint.response = response;
-                newKeyPoint.class_id = 0;
-
-                bool isOverlapping = false;
-              
-                for (auto it = keypoints.begin(); it < keypoints.end(); ++it){
-                    double overlap = cv::KeyPoint::overlap(newKeyPoint, *it);
-                    if (overlap > maxOverlap){
-                        isOverlapping = true;
-                        if (newKeyPoint.response > (*it).response){
-                            *it = newKeyPoint;
-                            break;
-                        }
-                    }
-                }
-              
-                if (!isOverlapping)
-                    keypoints.push_back(newKeyPoint);
-            }
-        }
-        
-    }
-
-    // visualize results
-    if (bVis)
+    if (detectorType.compare("FAST") == 0)
     {
-        cv::Mat visImage = img.clone();
-        cv::drawKeypoints(img, keypoints, visImage, cv::Scalar::all(-1), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
-        string windowName = "Harris Corner Detector Results";
-        cv::namedWindow(windowName, 6);
-        imshow(windowName, visImage);
-        cv::waitKey(0);
+        int threshold = 20;
+        cv::Ptr<cv::FastFeatureDetector> detector=cv::FastFeatureDetector::create(threshold,true);
+        detector->detect(img,keypoints);
+
     }
-    
+    else if (detectorType.compare("BRISK") == 0)
+    {
+        cv::Ptr<cv::BRISK> detector=cv::BRISK::create();
+        detector->detect(img,keypoints);
+
+    }
+
+    else if (detectorType.compare("SIFT") == 0)
+    {
+        int nfeatures = 100;
+        cv::Ptr<cv::FeatureDetector> detector = cv::xfeatures2d::SIFT::create();
+        detector->detect(img,keypoints);
+
+    }
+    else if (detectorType.compare("ORB") == 0)
+    {
+        int nfeatures = 100;
+        cv::Ptr<cv::FeatureDetector> detector = cv::ORB::create();
+        detector->detect(img,keypoints);
+
+
+    }
+    else if (detectorType.compare("AKAZE") == 0)
+    {
+        int nfeatures = 100;
+        cv::Ptr<cv::FeatureDetector> detector = cv::AKAZE::create();
+        detector->detect(img,keypoints);
+
+    }
+    if(bVis)
+    {
+        // visualize keypoints
+        string windowName = detectorType + " Corner Detection Results";
+        cv::Mat visImage = img.clone();
+        vis(windowName,img,keypoints,visImage);
+
+    }
 }

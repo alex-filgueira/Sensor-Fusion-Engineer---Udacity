@@ -1,4 +1,4 @@
-
+//test
 /* INCLUDES FOR THIS PROJECT */
 #include <iostream>
 #include <fstream>
@@ -22,73 +22,8 @@
 
 using namespace std;
 
-int run( string detectorType, string descriptorType);
-
-int main(int argc, const char *argv[])
-{
-    //for test easy----
-    string detectorType_list [] = {"SHITOMASI", "HARRIS", "FAST", "BRISK", "ORB", "AKAZE", "SIFT"};
-    string descriptorType_list [] = {"BRISK", "BRIEF", "ORB", "FREAK",};//AKAZE, SIFT out
-
-    // set input params
-    string detectorType;
-    string descriptorType;
-    
-    bool flag_arg = true;
-    bool flag_test = false;
-    if(argc == 1){
-        detectorType = "SHITOMASI";
-        descriptorType = "BRISK";
-    }
-    else if(argc == 2){
-         if(std::string(argv[1]) == "-h"){
-            cout << "detectorType: SHITOMASI, HARRIS, FAST, BRISK, ORB, AKAZE, SIFT" << endl;
-            cout << "descriptorType: BRISK, BRIEF, ORB, FREAK, AKAZE, SIFT" << endl;
-            cout << "-test: All detectors + all descriptors" << endl;
-            flag_arg = false;
-        }
-        else  if(std::string(argv[1]) == "-test"){
-            flag_test = true;
-        }
-        else{
-            cout << "bad parameter -> introduce -h for info.";
-            flag_arg = false;
-        }
-    }
-    else if(argc == 3){
-        detectorType = argv[1];
-        descriptorType = argv[2];
-    }
-    else{
-        cout << "Need 0 or 2 parameters";
-        flag_arg = false;
-    }
-
-    //for test easy----
-  //std::ofstream myfile;
-  //myfile.open ("../output/statistics.csv");
-  //myfile << "detector+descriptor,kp,matched_kp,time,\n";
-  //myfile.close();
-  
-    if(flag_test){
-        for(const string &detector : detectorType_list){
-            for(const string &descriptor : descriptorType_list){
-                run(detector, descriptor);
-            }
-        }
-    }
-    else if(flag_arg){
-        run(detectorType, descriptorType);
-    }
-}
-
-
-
-
-
 /* MAIN PROGRAM */
-//int main(int argc, const char *argv[])
-int run( string detectorType, string descriptorType)
+int main(int argc, const char *argv[])
 {
     /* INIT VARIABLES AND DATA STRUCTURES */
 
@@ -194,10 +129,10 @@ int run( string detectorType, string descriptorType)
         clusterLidarWithROI((dataBuffer.end()-1)->boundingBoxes, (dataBuffer.end() - 1)->lidarPoints, shrinkFactor, P_rect_00, R_rect_00, RT);
 
         // Visualize 3D objects
-        bVis = false; //true do erros
+        bVis = false;
         if(bVis)
         {
-            show3DObjects((dataBuffer.end()-1)->boundingBoxes, cv::Size(4.0, 20.0), cv::Size(2000, 2000), true);
+            show3DObjects((dataBuffer.end()-1)->boundingBoxes, cv::Size(4.0, 20.0), cv::Size(1000, 1000), true);
         }
         bVis = false;
 
@@ -215,15 +150,11 @@ int run( string detectorType, string descriptorType)
 
         // extract 2D keypoints from current image
         vector<cv::KeyPoint> keypoints; // create empty feature list for current image
-        //string detectorType = "FAST";
+        string detectorType = "FAST";
 
         if (detectorType.compare("SHITOMASI") == 0)
         {
             detKeypointsShiTomasi(keypoints, imgGray, false);
-        }
-        else if (detectorType.compare("HARRIS") == 0)
-        {
-            //detKeypointsHarris(keypoints, imgGray, false);
         }
         else
         {
@@ -253,7 +184,7 @@ int run( string detectorType, string descriptorType)
         /* EXTRACT KEYPOINT DESCRIPTORS */
 
         cv::Mat descriptors;
-        //string descriptorType = "BRISK"; // BRISK, BRIEF, ORB, FREAK, AKAZE, SIFT
+        string descriptorType = "BRISK"; // BRISK, BRIEF, ORB, FREAK, AKAZE, SIFT
         descKeypoints((dataBuffer.end() - 1)->keypoints, (dataBuffer.end() - 1)->cameraImg, descriptors, descriptorType);
 
         // push descriptors for current frame to end of data buffer
@@ -269,13 +200,12 @@ int run( string detectorType, string descriptorType)
 
             vector<cv::DMatch> matches;
             string matcherType = "MAT_BF";        // MAT_BF, MAT_FLANN
+            string descriptorType = "DES_BINARY"; // DES_BINARY, DES_HOG
             string selectorType = "SEL_NN";       // SEL_NN, SEL_KNN
 
-            string descriptorCategory = (descriptorType.compare("SIFT") == 0) ? "DES_HOG" : "DES_BINARY";
-            
             matchDescriptors((dataBuffer.end() - 2)->keypoints, (dataBuffer.end() - 1)->keypoints,
                              (dataBuffer.end() - 2)->descriptors, (dataBuffer.end() - 1)->descriptors,
-                             matches, descriptorCategory, matcherType, selectorType);
+                             matches, descriptorType, matcherType, selectorType);
 
             // store matches in current data frame
             (dataBuffer.end() - 1)->kptMatches = matches;
