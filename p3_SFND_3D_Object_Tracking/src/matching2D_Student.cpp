@@ -213,7 +213,6 @@ void detKeypointsHarris(vector<cv::KeyPoint> &keypoints, cv::Mat &img, bool bVis
                     keypoints.push_back(newKeyPoint);
             }
         }
-        
     }
 
     // visualize results

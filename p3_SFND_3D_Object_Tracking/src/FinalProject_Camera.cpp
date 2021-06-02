@@ -22,7 +22,7 @@
 
 using namespace std;
 
-int run( string detectorType, string descriptorType);
+int run( string detectorType, string descriptorType, bool bVis);
 
 int main(int argc, const char *argv[])
 {
@@ -65,20 +65,20 @@ int main(int argc, const char *argv[])
     }
 
     //for test easy----
-  //std::ofstream myfile;
-  //myfile.open ("../output/statistics.csv");
-  //myfile << "detector+descriptor,kp,matched_kp,time,\n";
-  //myfile.close();
+  std::ofstream myfile;
+  myfile.open ("../output/statistics.csv");
+  myfile << "detector+descriptor,ttcLidar,ttcCamera,time,\n";
+  myfile.close();
   
     if(flag_test){
         for(const string &detector : detectorType_list){
             for(const string &descriptor : descriptorType_list){
-                run(detector, descriptor);
+                run(detector, descriptor, false);
             }
         }
     }
     else if(flag_arg){
-        run(detectorType, descriptorType);
+        run(detectorType, descriptorType, true);
     }
 }
 
@@ -88,7 +88,7 @@ int main(int argc, const char *argv[])
 
 /* MAIN PROGRAM */
 //int main(int argc, const char *argv[])
-int run( string detectorType, string descriptorType)
+int run( string detectorType, string descriptorType, bool bVis)
 {
     /* INIT VARIABLES AND DATA STRUCTURES */
 
@@ -137,13 +137,18 @@ int run( string detectorType, string descriptorType)
     double sensorFrameRate = 10.0 / imgStepWidth; // frames per second for Lidar and camera
     int dataBufferSize = 2;       // no. of images which are held in memory (ring buffer) at the same time
     vector<DataFrame> dataBuffer; // list of data frames which are held in memory at the same time
-    bool bVis = false;            // visualize results
+    //bool bVis = false;            // visualize results
 
     /* MAIN LOOP OVER ALL IMAGES */
+    double ttcLidar; 
+    double ttcCamera; 
+    cv::TickMeter tm;
+  	//tm.start();
 
     for (size_t imgIndex = 0; imgIndex <= imgEndIndex - imgStartIndex; imgIndex+=imgStepWidth)
     {
         /* LOAD IMAGE INTO BUFFER */
+        tm.start();
 
         // assemble filenames for current index
         ostringstream imgNumber;
@@ -194,12 +199,12 @@ int run( string detectorType, string descriptorType)
         clusterLidarWithROI((dataBuffer.end()-1)->boundingBoxes, (dataBuffer.end() - 1)->lidarPoints, shrinkFactor, P_rect_00, R_rect_00, RT);
 
         // Visualize 3D objects
-        bVis = false; //true do erros
+        //bVis = false; 
         if(bVis)
         {
-            show3DObjects((dataBuffer.end()-1)->boundingBoxes, cv::Size(4.0, 20.0), cv::Size(2000, 2000), true);
+            show3DObjects((dataBuffer.end()-1)->boundingBoxes, cv::Size(4.0, 20.0), cv::Size(1500, 600), true);
         }
-        bVis = false;
+        //bVis = false;
 
         cout << "#4 : CLUSTER LIDAR POINT CLOUD done" << endl;
         
@@ -223,7 +228,7 @@ int run( string detectorType, string descriptorType)
         }
         else if (detectorType.compare("HARRIS") == 0)
         {
-            //detKeypointsHarris(keypoints, imgGray, false);
+            detKeypointsHarris(keypoints, imgGray, false);
         }
         else
         {
@@ -325,19 +330,19 @@ int run( string detectorType, string descriptorType)
                 {
                     //// STUDENT ASSIGNMENT
                     //// TASK FP.2 -> compute time-to-collision based on Lidar data (implement -> computeTTCLidar)
-                    double ttcLidar; 
+                    //double ttcLidar; 
                     computeTTCLidar(prevBB->lidarPoints, currBB->lidarPoints, sensorFrameRate, ttcLidar);
                     //// EOF STUDENT ASSIGNMENT
 
                     //// STUDENT ASSIGNMENT
                     //// TASK FP.3 -> assign enclosed keypoint matches to bounding box (implement -> clusterKptMatchesWithROI)
                     //// TASK FP.4 -> compute time-to-collision based on camera (implement -> computeTTCCamera)
-                    double ttcCamera;
+                    //double ttcCamera;
                     clusterKptMatchesWithROI(*currBB, (dataBuffer.end() - 2)->keypoints, (dataBuffer.end() - 1)->keypoints, (dataBuffer.end() - 1)->kptMatches);                    
                     computeTTCCamera((dataBuffer.end() - 2)->keypoints, (dataBuffer.end() - 1)->keypoints, currBB->kptMatches, sensorFrameRate, ttcCamera);
                     //// EOF STUDENT ASSIGNMENT
 
-                    bVis = true;
+                    //bVis = true;
                     if (bVis)
                     {
                         cv::Mat visImg = (dataBuffer.end() - 1)->cameraImg.clone();
@@ -354,7 +359,17 @@ int run( string detectorType, string descriptorType)
                         cout << "Press key to continue to next frame" << endl;
                         cv::waitKey(0);
                     }
-                    bVis = false;
+                    //bVis = false;
+
+    // output statistics
+    tm.stop();
+    std::ofstream myfile;
+    myfile.open ("../output/statistics.csv", std::ofstream::app);
+    myfile << detectorType<< " + " << descriptorType << ",";
+    myfile << ttcLidar << ",";
+    myfile << ttcCamera << ",";
+    myfile << tm.getTimeMilli() << ",\n";
+    myfile.close();
 
                 } // eof TTC computation
             } // eof loop over all BB matches            
@@ -362,6 +377,8 @@ int run( string detectorType, string descriptorType)
         }
 
     } // eof loop over all images
+
+
 
     return 0;
 }
