@@ -1,5 +1,7 @@
 # SFND 3D Object Tracking
+![Animation_neural](output/Animation_neural.gif)
 
+![Animation_ttc](output/Animation_ttc.gif)
 
 ## Project Rubric Points
 
@@ -64,14 +66,147 @@ void matchBoundingBoxes(std::vector<cv::DMatch> &matches, std::map<int, int> &bb
 ```
 
 #### 2. FP.2 Compute Lidar-based TTC
+In this part of the final project, your task is to compute the time-to-collision for all matched 3D objects based on Lidar measurements alone. Please take a look at the "Lesson 3: Engineering a Collision Detection System" of this course to revisit the theory behind TTC estimation. Also, please implement the estimation in a way that makes it robust against outliers which might be way too close and thus lead to faulty estimates of the TTC. Please return your TCC to the main function at the end of computeTTCLidar.
+
+### Result:
+
+```
+void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,
+                     std::vector<LidarPoint> &lidarPointsCurr, double frameRate, double &TTC)
+{
+    // ...
+    double prevX=0, currX=0, speed;
+    if(!lidarPointsPrev.size() || !lidarPointsCurr.size()){
+        TTC = NAN;
+        return;
+    }
+    for(auto it = lidarPointsPrev.begin(); it!= lidarPointsPrev.end(); ++it){
+        prevX += (*it).x;
+    }
+    prevX/=lidarPointsPrev.size();
+
+    for(auto it = lidarPointsCurr.begin(); it!= lidarPointsCurr.end(); ++it){
+        currX += (*it).x;
+    }
+    currX/=lidarPointsCurr.size();
+
+    speed = (prevX - currX) / (1/frameRate);
+    if(speed<0){
+        TTC = NAN;
+        return;
+    }
+    TTC = currX/speed;
+}
+```
 
 #### 3. FP.3 Associate Keypoint Correspondences with Bounding Boxes
+Before a TTC estimate can be computed in the next exercise, you need to find all keypoint matches that belong to each 3D object. You can do this by simply checking whether the corresponding keypoints are within the region of interest in the camera image. All matches which satisfy this condition should be added to a vector. The problem you will find is that there will be outliers among your matches. To eliminate those, I recommend that you compute a robust mean of all the euclidean distances between keypoint matches and then remove those that are too far away from the mean.
+
+### Result:
+```
+void clusterKptMatchesWithROI(BoundingBox &boundingBox, std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPoint> &kptsCurr, std::vector<cv::DMatch> &kptMatches)
+{
+    // ...
+    std::vector<cv::DMatch> kptMatchesROI;
+    double avgDistance = 0.0f;
+    double threshold = avgDistance * 0.8;
+
+    for(auto &match : kptMatches){
+        if(boundingBox.roi.contains(kptsCurr.at(match.trainIdx).pt)){
+            kptMatchesROI.push_back(match);
+        }
+    }
+
+    if(kptMatchesROI.size() > 0){
+        for(auto itr = kptMatchesROI.begin(); itr != kptMatchesROI.end(); itr++){
+            avgDistance += itr->distance;
+        }
+        avgDistance /= kptMatchesROI.size();
+    }
+    else{
+        return;
+    }
+
+    for(auto &itr : kptMatchesROI){
+        if (itr.distance < threshold){
+            boundingBox.kptMatches.push_back(itr);
+        }
+    }
+}
+```
 
 #### 4. FP.4 Compute Camera-based TTC
+Once keypoint matches have been added to the bounding boxes, the next step is to compute the TTC estimate. As with Lidar, we already looked into this in the second lesson of this course, so you please revisit the respective section and use the code sample there as a starting point for this task here. Once you have your estimate of the TTC, please return it to the main function at the end of computeTTCCamera.
+
+### Result:
+```
+void computeTTCCamera(std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPoint> &kptsCurr, 
+                      std::vector<cv::DMatch> kptMatches, double frameRate, double &TTC, cv::Mat *visImg)
+{
+    // ...
+    vector<double> distRatios;
+
+    for (auto it1 = kptMatches.begin(); it1 != kptMatches.end() - 1; ++it1){
+        cv::KeyPoint kpOuterCurr = kptsCurr.at(it1->trainIdx);
+        cv::KeyPoint kpOuterPrev = kptsPrev.at(it1->queryIdx);
+
+        for (auto it2 = kptMatches.begin() + 1; it2 != kptMatches.end(); ++it2){
+            double minDist = 70.0; 
+            cv::KeyPoint kpInnerCurr = kptsCurr.at(it2->trainIdx);
+            cv::KeyPoint kpInnerPrev = kptsPrev.at(it2->queryIdx);
+            double distCurr = cv::norm(kpOuterCurr.pt - kpInnerCurr.pt);
+            double distPrev = cv::norm(kpOuterPrev.pt - kpInnerPrev.pt);
+            if(distPrev > std::numeric_limits<double>::epsilon() && distCurr >= minDist){
+                distRatios.push_back(distCurr / distPrev);
+            }
+        }
+    }
+    if (distRatios.size() == 0){
+        TTC = NAN;
+        return;
+    }
+    std::sort(distRatios.begin(), distRatios.end());
+    long medIndex = floor(distRatios.size() / 2.0);
+    double medDistRatio = distRatios.size() % 2 == 0 ? (distRatios[medIndex - 1] + distRatios[medIndex]) / 2.0 : distRatios[medIndex];
+    double dT = 1 / frameRate;
+    TTC = -dT / (1 - medDistRatio);
+
+}
+```
 
 #### 5. FP.5 Performance Evaluation 1
+This exercise is about conducting tests with the final project code, especially with regard to the Lidar part. Look for several examples where you have the impression that the Lidar-based TTC estimate is way off. Once you have found those, describe your observations and provide a sound argumentation why you think this happened.
 
+The task is complete once several examples (2-3) have been identified and described in detail. The assertion that the TTC is off should be based on manually estimating the distance to the rear of the preceding vehicle from a top view perspective of the Lidar points.
+
+### Result:
+![capture_ttcLidar_1](output/capture_ttcLidar_1.PNG)
+![capture_ttcLidar_2](output/capture_ttcLidar_2.PNG)
+![capture_ttcLidar_3](output/capture_ttcLidar_3.PNG)
+![capture_ttcLidar_4](output/capture_ttcLidar_4.PNG)
+![capture_ttcLidar_5](output/capture_ttcLidar_5.PNG)
+
+![graphic_ttcLidar_all](output/graphic_ttcLidar_all.PNG)
 #### 6. FP.6 Performance Evaluation 2
+This last exercise is about running the different detector / descriptor combinations and looking at the differences in TTC estimation. Find out which methods perform best and also include several examples where camera-based TTC estimation is way off. As with Lidar, describe your observations again and also look into potential reasons. This is the last task in the final project.
+
+The task is complete once all detector / descriptor combinations implemented in previous chapters have been compared with regard to the TTC estimate on a frame-by-frame basis. To facilitate the comparison, a spreadsheet and graph should be used to represent the different TTCs.
+
+### Result:
+![graphic_time_descriptor](output/graphic_time_descriptor.PNG)
+![graphic_time_detector](output/graphic_time_detector.PNG)
+
+![graphic_ttcCamera_Brisk_1](output/graphic_ttcCamera_Brisk_1.PNG)
+![graphic_ttcCamera_Brisk_2](output/graphic_ttcCamera_Brisk_2.PNG)
+![graphic_ttcCamera_Brisk_3](output/graphic_ttcCamera_Brisk_3.PNG)
+
+![graphic_ttcCamera_Brisk_all](output/graphic_ttcCamera_BRISK_all.PNG)
+![graphic_ttcCamera_FAST_all](output/graphic_ttcCamera_FAST_all.PNG)
+![graphic_ttcCamera_HARRIS_all](output/graphic_ttcCamera_HARRIS_all.PNG)
+![graphic_ttcCamera_SHITOMASI_all](output/graphic_ttcCamera_SHITOMASI_all.PNG)
+
+
+
 
 
 ## Basic Build Instructions
