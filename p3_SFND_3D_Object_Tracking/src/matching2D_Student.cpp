@@ -157,9 +157,10 @@ void detKeypointsModern(std::vector<cv::KeyPoint> &keypoints, cv::Mat &img, std:
     detector->detect(img, keypoints);
 
     if(bVis){
-        // visualize keypoints
-        string windowName = detectorType + " Corner Detection Results";
         cv::Mat visImage = img.clone();
-        vis(windowName,img,keypoints,visImage);
+        cv::drawKeypoints(img, keypoints, visImage, cv::Scalar::all(-1), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
+        cv::namedWindow(windowName, 6);
+        imshow(windowName, visImage);
+        cv::waitKey(0);
     }
 }
