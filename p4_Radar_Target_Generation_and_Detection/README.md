@@ -38,39 +38,11 @@ Velocity = 20; %velocity can be any value in the range of -70 to + 70 m/s.
 InitialRange = 70; %Range cannot exceed the max value of 200m
 ```
 
-## FMCW Waveform Generation
+## FFTP
+FFTP output below
+![FFTP output](images/fig1.jpg)
 ```
-rangeResolution = 1;
-Bandwidth = c / (2*rangeResolution);
 
-Rmax = 200;
-Tchirp = 5.5 * 2 * Rmax / c;
-slope = Bandwidth/Tchirp;
-
-%Operating carrier frequency of Radar 
-fc = 77e9;             %carrier freq
-
-                                                          
-%The number of chirps in one sequence. Its ideal to have 2^ value for the ease of running the FFT
-%for Doppler Estimation. 
-Nd = 128;                   % #of doppler cells OR #of sent periods % number of chirps
-
-%The number of samples on each chirp. 
-Nr = 1024;                  %for length of time OR # of range cells
-
-% Timestamp for running the displacement scenario for every sample on each
-% chirp
-t = linspace(0,Nd*Tchirp,Nr*Nd); %total time for samples
-
-
-%Creating the vectors for Tx, Rx and Mix based on the total samples input.
-Tx = zeros(1,length(t)); %transmitted signal
-Rx = zeros(1,length(t)); %received signal
-Mix = zeros(1,length(t)); %beat signal
-
-%Similar vectors for range_covered and time delay.
-r_t = zeros(1,length(t));
-td = zeros(1,length(t));
 
 ```
 
