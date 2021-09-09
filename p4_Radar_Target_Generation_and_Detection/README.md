@@ -1,6 +1,6 @@
 # Radar_Target_Generation_and_Detection
 
-![Project Overview](https://youtu.be/DIVmHps0G8M)
+[![Project Overview](https://img.youtube.com/vi/DIVmHps0G8M/maxresdefault.jpg)](https://youtu.be/DIVmHps0G8M)
 
 
 ![Animation_neural](output/Animation_neural.gif)
