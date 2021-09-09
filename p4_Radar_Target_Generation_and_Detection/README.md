@@ -41,6 +41,10 @@ InitialRange = 70; %Range cannot exceed the max value of 200m
 ## FFTP
 FFTP output below
 ![FFTP output](images/fig1.jpg)
+
+Range from First FFT below
+![Range from First FFT](images/fig2.jpg)
+
 ```
 %% Signal generation and Moving Target simulation
 % Running the radar scenario over the time. 
@@ -92,96 +96,107 @@ signal_fft = abs(signal_fft/L);
 signal_fft = signal_fft(1:L/2+1);
 ```
 
-
-#### Result:
-```
-void matchBoundingBoxes(std::vector<cv::DMatch> &matches, std::map<int, int> &bbBestMatches, DataFrame &prevFrame, DataFrame &currFrame)
-{
-    // ...
-    int prevKpIdx, currKpIdx;
-    cv::KeyPoint prevKp, currKp;
-
-    int pSize = prevFrame.boundingBoxes.size();
-    int cSize = currFrame.boundingBoxes.size();
-    int counts[pSize][cSize] = {};
-
-    vector<int> prevBoxesIds, currBoxesIds;
-
-    for(auto it1=matches.begin(); it1!= matches.end(); ++it1){
-        prevKpIdx = (*it1).queryIdx;
-        currKpIdx = (*it1).trainIdx;
-
-        prevKp = prevFrame.keypoints[prevKpIdx];
-        currKp = currFrame.keypoints[currKpIdx];
-
-        prevBoxesIds.clear();
-        currBoxesIds.clear();
-
-        for(auto it2 = prevFrame.boundingBoxes.begin(); it2!= prevFrame.boundingBoxes.end(); ++it2){
-            if((*it2).roi.contains(prevKp.pt)){
-                prevBoxesIds.push_back((*it2).boxID);
-            }
-        }
-
-        for(auto it2 = currFrame.boundingBoxes.begin(); it2!= currFrame.boundingBoxes.end(); ++it2){
-            if((*it2).roi.contains(prevKp.pt)){
-                currBoxesIds.push_back((*it2).boxID);
-            }
-        }
-
-        for(auto prevId:prevBoxesIds){
-            for(auto currId:currBoxesIds){
-                counts[prevId][currId]++;
-            }
-        }
-    }
-
-    int maxCount=0, maxId;
-    for(int prevId=0; prevId<pSize; prevId++){
-        maxCount = 0;
-        for(int currId=0; currId<cSize; currId++){
-            if (counts[prevId][currId] > maxCount){
-                maxCount = counts[prevId][currId];
-                maxId = currId;
-            }
-        }
-        bbBestMatches[prevId] = maxId;
-    }
-}
-```
-
-#### 2. Selection of Training, Guard cells and offset.
-In this part of the final project, your task is to compute the time-to-collision for all matched 3D objects based on Lidar measurements alone. Please take a look at the "Lesson 3: Engineering a Collision Detection System" of this course to revisit the theory behind TTC estimation. Also, please implement the estimation in a way that makes it robust against outliers which might be way too close and thus lead to faulty estimates of the TTC. Please return your TCC to the main function at the end of computeTTCLidar.
-
-### Result:
+## 2D FFTP
+2D FFTP output below
+![2D FFTP output](images/fig3.jpg)
 
 ```
-void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,
-                     std::vector<LidarPoint> &lidarPointsCurr, double frameRate, double &TTC)
-{
-    // ...
-    double prevX=0, currX=0, speed;
-    if(!lidarPointsPrev.size() || !lidarPointsCurr.size()){
-        TTC = NAN;
-        return;
-    }
-    for(auto it = lidarPointsPrev.begin(); it!= lidarPointsPrev.end(); ++it){
-        prevX += (*it).x;
-    }
-    prevX/=lidarPointsPrev.size();
+%% RANGE DOPPLER RESPONSE
+% The 2D FFT implementation is already provided here. This will run a 2DFFT
+% on the mixed signal (beat signal) output and generate a range doppler
+% map.You will implement CFAR on the generated RDM
 
-    for(auto it = lidarPointsCurr.begin(); it!= lidarPointsCurr.end(); ++it){
-        currX += (*it).x;
-    }
-    currX/=lidarPointsCurr.size();
 
-    speed = (prevX - currX) / (1/frameRate);
-    if(speed<0){
-        TTC = NAN;
-        return;
-    }
-    TTC = currX/speed;
-}
+% Range Doppler Map Generation.
+
+% The output of the 2D FFT is an image that has reponse in the range and
+% doppler FFT bins. So, it is important to convert the axis from bin sizes
+% to range and doppler based on their Max values.
+
+Mix=reshape(Mix,[Nr,Nd]);
+
+% 2D FFT using the FFT size for both dimensions.
+sig_fft2 = fft2(Mix,Nr,Nd);
+
+% Taking just one side of signal from Range dimension.
+sig_fft2 = sig_fft2(1:Nr/2,1:Nd);
+sig_fft2 = fftshift (sig_fft2);
+RDM = abs(sig_fft2);
+RDM = 10*log10(RDM) ;
+
+%use the surf function to plot the output of 2DFFT and to show axis in both
+%dimensions
+doppler_axis = linspace(-100,100,Nd);
+range_axis = linspace(-200,200,Nr/2)*((Nr/2)/400);
+figure,surf(doppler_axis,range_axis,RDM);
 ```
 
-#### 3. Steps taken to suppress the non-thresholded cells at the edges.
+## 2D CFAR
+2D CFAR output below
+![2D CFAR output](images/fig4.jpg)
+```
+%% CFAR implementation
+
+%Slide Window through the complete Range Doppler Map
+
+% *%TODO* :
+%Select the number of Training Cells in both the dimensions.
+Tr = 14;
+Td = 6;
+
+% *%TODO* :
+%Select the number of Guard Cells in both dimensions around the Cell under 
+%test (CUT) for accurate estimation
+Gr = 6;
+Gd = 3;
+
+% *%TODO* :
+% offset the threshold by SNR value in dB
+offset = 6;
+
+% *%TODO* :
+%Create a vector to store noise_level for each iteration on training cells
+noise_level = zeros(1,1);
+
+
+% *%TODO* :
+%design a loop such that it slides the CUT across range doppler map by
+%giving margins at the edges for Training and Guard Cells.
+%For every iteration sum the signal level within all the training
+%cells. To sum convert the value from logarithmic to linear using db2pow
+%function. Average the summed values for all of the training
+%cells used. After averaging convert it back to logarithimic using pow2db.
+%Further add the offset to it to determine the threshold. Next, compare the
+%signal under CUT with this threshold. If the CUT level > threshold assign
+%it a value of 1, else equate it to 0.
+
+
+   % Use RDM[x,y] as the matrix from the output of 2D FFT for implementing
+   % CFAR
+num_cells = (2*Tr+2*Gr+1)*(2*Td+2*Gd+1) - (2*Gr+1)*(2*Gd+1);
+signal_cfar = zeros(Nr/2,Nd);
+
+for i = 1:(Nr/2 - (2*Gr+2*Tr))
+    for j = 1:(Nd - (2*Gd+2*Td))
+        
+        s1 = sum(db2pow(RDM(i:i+2*Tr+2*Gr, j:j+2*Td+2*Gd)),'all');
+        s2 = sum(db2pow(RDM(i+Tr:i+Tr+2*Gr, j+Td:j+Td+2*Gd)),'all');    
+        noise_level = s1 - s2;
+        
+        threshold = noise_level/num_cells;      
+        threshold = pow2db(threshold) + offset;
+        threshold = db2pow(threshold);
+        
+        signal = db2pow(RDM(i+Tr+Gr, j+Td+Gd));
+        
+        if (signal <= threshold)
+            signal = 0;
+        else 
+            signal = 1;
+        end
+        
+        signal_cfar(i+Tr+Gr,j+Td+Gd) = signal;  
+        
+    end
+end
+```
