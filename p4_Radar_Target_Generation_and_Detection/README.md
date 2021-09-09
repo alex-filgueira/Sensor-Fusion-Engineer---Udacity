@@ -42,8 +42,54 @@ InitialRange = 70; %Range cannot exceed the max value of 200m
 FFTP output below
 ![FFTP output](images/fig1.jpg)
 ```
+%% Signal generation and Moving Target simulation
+% Running the radar scenario over the time. 
+
+for i=1:length(t)         
+    
+    
+    % *%TODO* :
+    %For each time stamp update the Range of the Target for constant velocity. 
+    r_t(i) = InitialRange + Velocity*t(i);
+    td(i) = 2 * r_t(i)/c;
+    
+    % *%TODO* :
+    %For each time sample we need update the transmitted and
+    %received signal. 
+    Tx(i) = cos(2*pi*(fc*t(i) + slope*(t(i)^2)/2 ));
+    delay = t(i) - td(i);
+    Rx (i)  = cos(2*pi*( fc*delay + slope * (delay^2)/2 )) ;
+    
+    % *%TODO* :
+    %Now by mixing the Transmit and Receive generate the beat signal
+    %This is done by element wise matrix multiplication of Transmit and
+    %Receiver Signal
+    Mix(i) = Tx(i)*Rx(i);
+    
+end
+
+%% RANGE MEASUREMENT
 
 
+ % *%TODO* :
+%reshape the vector into Nr*Nd array. Nr and Nd here would also define the size of
+%Range and Doppler FFT respectively.
+Mix = reshape(Mix, [Nr, Nd]);
+
+ % *%TODO* :
+%run the FFT on the beat signal along the range bins dimension (Nr) and
+%normalize.
+signal_fft = fft(Mix, Nr); 
+L = Tchirp * Bandwidth;
+
+ % *%TODO* :
+% Take the absolute value of FFT output
+signal_fft = abs(signal_fft/L);
+
+ % *%TODO* :
+% Output of FFT is double sided signal, but we are interested in only one side of the spectrum.
+% Hence we throw out half of the samples.
+signal_fft = signal_fft(1:L/2+1);
 ```
 
 
