@@ -39,10 +39,10 @@ InitialRange = 70; %Range cannot exceed the max value of 200m
 ```
 
 ## FFTP
-FFTP output below
+### FFTP output below
 ![FFTP output](images/fig1.jpg)
 
-Range from First FFT below
+### Range from First FFT below
 ![Range from First FFT](images/fig2.jpg)
 
 ```
@@ -97,7 +97,7 @@ signal_fft = signal_fft(1:L/2+1);
 ```
 
 ## 2D FFTP
-2D FFTP output below
+### 2D FFTP output below
 ![2D FFTP output](images/fig3.jpg)
 
 ```
@@ -132,7 +132,7 @@ figure,surf(doppler_axis,range_axis,RDM);
 ```
 
 ## 2D CFAR
-2D CFAR output below
+### 2D CFAR output below
 ![2D CFAR output](images/fig4.jpg)
 ```
 %% CFAR implementation
