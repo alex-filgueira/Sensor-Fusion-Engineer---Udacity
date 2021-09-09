@@ -1,17 +1,43 @@
 # Radar_Target_Generation_and_Detection
 
-Click in the image above for see the video project overview!
+#### Click in the image above for see the video project overview!
 [![Project Overview](https://img.youtube.com/vi/DIVmHps0G8M/maxresdefault.jpg)](https://youtu.be/DIVmHps0G8M)
 
 
-![Animation_neural](output/Animation_neural.gif)
-
-![Animation_ttc](output/Animation_ttc.gif)
 
 ## Project Rubric Points
 
-#### 1. Implementation steps for the 2D CFAR process. 
-In this task, please implement the method "matchBoundingBoxes", which takes as input both the previous and the current data frames and provides as output the ids of the matched regions of interest (i.e. the boxID property)“. Matches must be the ones with the highest number of keypoint correspondences.
+#### 1. FMCW Waveform Design
+Using the given system requirements, design
+a FMCW waveform. Find its Bandwidth (B), chirp time (Tchirp) and slope of the chirp.
+
+#### 2. Simulation Loop
+Simulate Target movement and calculate the beat or mixed signal for every timestamp.
+
+#### 3. Range FFT (1st FFT)
+Implement the Range FFT on the Beat or Mixed Signal and plot the result.
+
+#### 4. 2D CFAR
+Implement the 2D CFAR process on the output of 2D FFT operation, i.e the Range Doppler Map.
+
+
+## Radar Specifications
+```
+% Frequency of operation = 77GHz
+% Max Range = 200m
+% Range Resolution = 1 m
+% Max Velocity = 100 m/s
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%speed of light = 3e8
+```
+
+## User Defined Range and Velocity of target
+```
+Velocity = 20; %velocity can be any value in the range of -70 to + 70 m/s.
+InitialRange = 70; %Range cannot exceed the max value of 200m
+```
+
 
 #### Result:
 ```
