@@ -220,23 +220,7 @@ for i = 1:(Nr/2 - (2*Gr+2*Tr))
     end
 end
 
-
-
-
-% *%TODO* :
-% The process above will generate a thresholded block, which is smaller 
-%than the Range Doppler Map as the CUT cannot be located at the edges of
-%matrix. Hence,few cells will not be thresholded. To keep the map size same
-% set those values to 0. 
  
-
-
-
-
-
-
-
-
 % *%TODO* :
 %display the CFAR output using the Surf function like we did for Range
 %Doppler Response output.
