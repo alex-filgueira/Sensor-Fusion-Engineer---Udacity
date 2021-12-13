@@ -5,7 +5,7 @@ Sensor Fusion UKF Highway Project
 
 
 
-## Other Important Dependencies
+## Important Dependencies
 * cmake >= 3.5
   * All OSes: [click here for installation instructions](https://cmake.org/install/)
 * make >= 4.1 (Linux, Mac), 3.81 (Windows)
@@ -43,7 +43,7 @@ Sensor Fusion UKF Highway Project
 
 
 ## Test highway.h values
-<img src="media/parameters.PNG" width="400" height="400" />
+<img src="media/parameters.PNG" width="796" height="307" />
 
 #### 1. Only track 1 car
 
@@ -77,7 +77,7 @@ Sensor Fusion UKF Highway Project
 ## Main functions (ukf.cpp)
 #### 1. ProcessMeasurement -> init
 
-<img src="media/init_process.gif" width="700" height="400" />
+<img src="media/init_process.PNG" width="1325" height="300" />
 
 
 #### 2. Prediction
